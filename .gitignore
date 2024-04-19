@@ -1,0 +1,26 @@
+# Byte-compiled Python files
+*.pyc
+*.pyo
+
+# Cache files for the coding editor
+.vscode/
+
+# Cookiecutter files
+.cookiecutter/
+
+# Directory for IPython
+IPython/
+
+# Log files
+*.log
+
+# Virtual environment
+venv/
+
+# .DS_Store files
+*.DS_Store
+
+dist/
+build/
+*.egg-info/
+*.egg
