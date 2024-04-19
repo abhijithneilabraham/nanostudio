@@ -14,8 +14,7 @@ setup(
     install_requires=[
         'torch>=1.7.1',
         'numpy',
-        'transformers',
-        'wandb',
+        'transformers'
     ],
     classifiers=[
         'Development Status :: 3 - Alpha',

@@ -3,7 +3,7 @@ import torch
 import os
 
 class DataLoader:
-    def __init__(self, data_dir, block_size, batch_size, device):
+    def __init__(self, data_dir='data', block_size = 1024, batch_size = 12, device='cpu'):
         self.data_dir = data_dir
         self.block_size = block_size
         self.batch_size = batch_size
