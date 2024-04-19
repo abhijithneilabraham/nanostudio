@@ -1,8 +1,8 @@
-# config.py
 import os
 import yaml
 import json
-
+import logging
+from collections import ChainMap
 
 class Config:
     # Default configurations
@@ -28,26 +28,38 @@ class Config:
     }
 
     def __init__(self, config_path=None):
-        # Load user configuration if provided, otherwise load defaults
-        self.config = self.load_config(config_path) if config_path else self.defaults
+        self.config_path = config_path
+        self.config = self.load_config()
         self.post_process()
 
-    def load_config(self, config_path):
-        # Load configuration from a YAML or JSON file
-        try:
-            with open(config_path, 'r') as file:
-                if config_path.endswith('.yaml') or config_path.endswith('.yml'):
-                    return yaml.safe_load(file)
-                elif config_path.endswith('.json'):
-                    return json.load(file)
-        except Exception as e:
-            print(f"Error loading configuration file: {e}")
-            return self.defaults
+    def load_config(self):
+        if self.config_path:
+            try:
+                with open(self.config_path, 'r') as file:
+                    user_config = yaml.safe_load(file) if self.config_path.endswith(('.yaml', '.yml')) else json.load(file)
+                    # Merge defaults with loaded configuration
+                    return ChainMap(user_config, self.defaults)
+            except Exception as e:
+                logging.error(f"Error loading configuration file: {e}")
+        return self.defaults
 
     def post_process(self):
         # Ensure all paths are absolute and directories are created
         for key in ['MODEL_DIR', 'DATA_DIR', 'OUTPUT_DIR']:
-            if not os.path.isabs(self.config[key]):
-                self.config[key] = os.path.join(self.config['ROOT_DIR'], self.config[key])
-            os.makedirs(self.config[key], exist_ok=True)
+            path = self.config[key]
+            if not os.path.isabs(path):
+                path = os.path.join(self.config['ROOT_DIR'], path)
+            os.makedirs(path, exist_ok=True)
+            self.config[key] = path
 
+    def update(self, updates):
+        # Allows dynamic updating of the configuration
+        self.config.update(updates)
+        self.post_process()
+
+    def get(self, key, default=None):
+        # Get a configuration value with a default
+        return self.config.get(key, default)
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
