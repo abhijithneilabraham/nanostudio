@@ -3,7 +3,7 @@ import torch.optim as optim
 from torch.cuda.amp import GradScaler, autocast
 import time
 from .model import wrap_model_ddp
-
+import os
 
 class Trainer:
     def __init__(self, config, model, data_loader):
@@ -69,6 +69,7 @@ class Trainer:
     def save_model(self, epoch):
         """Save model checkpoints."""
         checkpoint_path = f"{self.config['out_dir']}/model_epoch_{epoch + 1}.pt"
+        os.makedirs(os.path.dirname(checkpoint_path), exist_ok=True)
         torch.save(self.model.state_dict(), checkpoint_path)
         print(f"Checkpoint saved to {checkpoint_path}")
 
