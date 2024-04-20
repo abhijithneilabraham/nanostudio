@@ -30,7 +30,8 @@ class Trainer:
         """Train the model for one epoch, iterating over the data loader."""
         self.model.train()
         total_loss = 0
-        for batch_idx, (x, y) in enumerate(self.data_loader.get_batches()):
+        # Use fetch_batch to properly iterate through batches
+        for x, y in self.data_loader.fetch_batch():
             x, y = x.to(self.config['device']), y.to(self.config['device'])
             self.optimizer.zero_grad()
 
@@ -39,10 +40,9 @@ class Trainer:
                 loss = self.loss_fn(logits, y)
 
             self.scaler.scale(loss).backward()
-            if (batch_idx + 1) % self.config['gradient_accumulation_steps'] == 0:
-                self.scaler.step(self.optimizer)
-                self.scaler.update()
-                self.optimizer.zero_grad()
+            self.scaler.step(self.optimizer)
+            self.scaler.update()
+            self.optimizer.zero_grad()
 
             total_loss += loss.item()
 
@@ -60,8 +60,8 @@ class Trainer:
         """Execute the full training loop over the specified number of epochs."""
         for epoch in range(self.config['epochs']):
             epoch_start_time = time.time()
+            self.train_epoch()
             epoch_duration = time.time() - epoch_start_time
-
             if self.is_master:
                 print(f"Epoch {epoch + 1}/{self.config['epochs']} completed in {epoch_duration:.2f} seconds.")
                 self.save_model(epoch)
@@ -83,7 +83,7 @@ class Trainer:
         self.model.eval()
         val_loss = 0
         with torch.no_grad():
-            for x, y in self.data_loader.get_validation_batches():
+            for x, y in self.data_loader.fetch_batch('val'):
                 x, y = x.to(self.config['device']), y.to(self.config['device'])
                 with autocast(enabled=self.config['dtype'] == 'float16'):
                     logits = self.model(x)
