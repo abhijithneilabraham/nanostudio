@@ -3,6 +3,8 @@ from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.optim import AdamW
 from torch.nn.utils import clip_grad_norm_
 from torch.cuda.amp import GradScaler, autocast
+from tqdm import tqdm  # Import tqdm for progress bars
+
 
 class Trainer:
     def __init__(self, config, model, data_loader):
@@ -23,9 +25,9 @@ class Trainer:
         self.model.train()
         for epoch in range(self.config['epochs']):
             total_loss = 0
-            batch_generator = self.data_loader.get_batch('train')
-            for _ in range(self.config['batch_size']):  # Iterate over the number of batches per epoch
-                inputs, targets = next(batch_generator)
+            progress_bar = tqdm(range(self.config['batch_size']), desc=f'Epoch {epoch}', leave=True)  # Initialize progress bar
+            for _ in progress_bar:
+                inputs, targets = next(self.data_loader.get_batch('train'))
                 inputs = inputs.to(self.device)  # Ensure inputs are on the correct device
                 targets = targets.to(self.device)  # Ensure targets are on the correct device
                 
@@ -40,8 +42,10 @@ class Trainer:
                 self.scaler.update()  # Update the scale for next iteration
                 total_loss += loss.item()
 
+                progress_bar.set_postfix(loss=f'{loss.item():.4f}')  # Update progress bar with current loss
+
             avg_loss = total_loss / self.config['batch_size']
-            print(f'Epoch {epoch}: Total Loss {avg_loss}')
+            print(f'Epoch {epoch}: Average Loss {avg_loss:.4f}')
 
     def save_model(self, path):
         torch.save(self.model.state_dict(), path)
