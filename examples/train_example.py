@@ -33,7 +33,7 @@ def main():
     model_config = GPTConfig(**config.model_config)
     model = GPT(model_config)
 
-    data_loader = DataLoader(data_dir="shakespeare_char", block_size=model_config.block_size, 
+    data_loader = DataLoader(hf_dataset_name="ag_news", block_size=model_config.block_size, 
                              batch_size=config.training_config['batch_size'], 
                              device=config.training_config['device'])
 
